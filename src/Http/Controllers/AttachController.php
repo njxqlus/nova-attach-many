@@ -37,19 +37,17 @@ class AttachController extends Controller
             $panels = collect($resourceClass->fields($request))
                 ->where('component', 'panel');
             foreach ($panels as $panel) {
-                if ($panel) {
-                    $conditionalContainer = collect($panel->data)
-                        ->where('component', 'conditional-container')
-                        ->first();
-                    if ($conditionalContainer) {
-                        $field = collect($conditionalContainer->fields)
-                            ->where('component', 'nova-attach-many')
-                            ->where('attribute', $relationship)
-                            ->first();
-                        if($field) {
-                            break;
-                        }
-                    }
+                $field = collect($panel->data)
+                    ->where('component', 'conditional-container')
+                    ->map(function ($component) {
+                        return $component->fields;
+                    })->collapse()
+                    ->where('component', 'nova-attach-many')
+                    ->where('attribute', $relationship)
+                    ->first();
+
+                if ($field) {
+                    break;
                 }
             }
         }
